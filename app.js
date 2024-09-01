@@ -3,7 +3,7 @@ const {open} = require('sqlite')
 const sqlite3 = require('sqlite3')
 const path = require('path')
 const app = express()
-
+app.use(express.json())
 const dbPath = path.join(__dirname, 'cricketTeam.db')
 
 let db = null
@@ -43,26 +43,6 @@ app.get('/players/', async (request, response) => {
   }
   response.send(playersList.map(player => result(player)))
 })
-//api3.
-app.get('/players/:playerId/', async (request, response) => {
-  const {playerId} = request.params
-  const player = `
-    SELECT
-      *
-    FROM
-      cricket_team
-    WHERE
-      player_id = ${playerId};`
-  let result = player => {
-    return {
-      playerId: player.player_id,
-      playerName: player.player_name,
-      jerseyNumber: player.jersey_number,
-      role: player.role,
-    }
-  }
-  response.send(result(await db.get(player)))
-})
 
 //api2
 app.post('/players/', async (request, response) => {
@@ -73,10 +53,29 @@ app.post('/players/', async (request, response) => {
   values (
     "${playerName}","${jerseyNumber}","${role}"
   )`
-  const dbresponse = await db.run(addPlayer)
-  const playerId = dbResponse.lastID
-  response.send({playerId: playerId})
+  const dbResponse = await db.run(addPlayer)
   response.send('Player Added to Team')
+})
+
+//api3.
+app.get('/players/:playerId/', async (request, response) => {
+  const {playerId} = request.params
+  const player = `
+    SELECT
+      *
+    FROM
+      cricket_team
+    WHERE
+      player_id = '${playerId}';`
+  let result = player => {
+    return {
+      playerId: player.player_id,
+      playerName: player.player_name,
+      jerseyNumber: player.jersey_number,
+      role: player.role,
+    }
+  }
+  response.send(result(await db.get(player)))
 })
 
 //api4
@@ -90,20 +89,21 @@ app.put('/players/:playerId/', async (request, response) => {
     SET
       player_id='${playerId}',
       player_name='${playerName}',
-      jersey_number="${jerseyNumber}",
-      role="${role}",
+      jersey_number='${jerseyNumber}',
+      role='${role}'
     WHERE
-      player_id = ${playerId};`
+      player_id = '${playerId}';`
   await db.run(updateplayerquery)
-  response.send('player Details Updated')
+  response.send('Player Details Updated')
 })
 
-app.delete(`/players/:playerId/`, async (request, response) => {
+//api5
+app.delete('/players/:playerId/', async (request, response) => {
   const {playerId} = request.params
   const deletePlayerQuery = `
     DELETE FROM cricket_team
     WHERE
-      player_id = ${playerId};`
+      player_id = '${playerId}';`
   await db.run(deletePlayerQuery)
   response.send('Player Removed')
 })
